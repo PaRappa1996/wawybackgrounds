@@ -118,7 +118,8 @@ class PlayState extends MusicBeatState
 	public static var isStoryMode:Bool = false;
 	public static var storyWeek:Int = 0;
 	public static var storyPlaylist:Array<String> = [];
-	public static var storyDifficulty:Int = 1;
+	public var elapsedtime:Float = 0;
+    public static var storyDifficulty:Int = 1;
 
 	public var vocals:FlxSound;
 
@@ -152,6 +153,7 @@ class PlayState extends MusicBeatState
 
 	private var healthBarBG:AttachedSprite;
 	public var healthBar:FlxBar;
+	public static var eyesoreson = true;
 	var songPercent:Float = 0;
 
 	private var timeBarBG:AttachedSprite;
@@ -177,7 +179,9 @@ class PlayState extends MusicBeatState
 	public var practiceMode:Bool = false;
 
 	public var botplaySine:Float = 0;
-	public var botplayTxt:FlxText;
+	private var shakeCam:Bool = false;
+	private var shakeCamALT:Bool = false;
+    public var botplayTxt:FlxText;
 
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
@@ -2166,6 +2170,57 @@ class PlayState extends MusicBeatState
 								limoKillingState = 3;
 							}
 
+                        		#if android
+		FlxG.camera.setFilters([new ShaderFilter(screenshader.shader)]); // this is very stupid but doesn't effect memory all that much so
+		#end
+		if (shakeCam && eyesoreson)
+		{
+			// var shad = cast(FlxG.camera.screen.shader,Shaders.PulseShader);
+			FlxG.camera.shake(0.015, 0.015);
+		}
+		if (shakeCamALT && eyesoreson)
+		{
+			FlxG.camera.shake(0.015, 0.015);
+		}
+		#if android
+		screenshader.shader.uTime.value[0] += elapsed;
+		if (shakeCam && eyesoreson)
+		{
+			screenshader.shader.uampmul.value[0] = 1;
+		}
+		else
+		{
+			screenshader.shader.uampmul.value[0] -= (elapsed / 2);
+		}
+		screenshader.Enabled = shakeCam && eyesoreson;
+		#end
+
+	/*if (FlxG.keys.justPressed.NINE)
+	{
+		iconP1.swapOldIcon();
+	}*/
+	switch (SONG.song.toLowerCase())
+	{
+		case 'technology':
+			switch (curStep)
+			{
+				case 794:
+				if(ClientPrefs.flashing) FlxG.camera.flash(FlxColor.WHITE, 1);
+				//purpleGlow,visible = true;
+			}
+			case 'polygonized':
+				switch (curStep)
+				{
+					case 60:
+						FlxG.camera.flash(FlxColor.BLACK, 1);
+					case 127:
+						camHUD.visible = true; // mmmmm
+					case 1024 | 1312 | 1424 | 1552 | 1664:
+						shakeCam = true;
+					case 1152 | 1408 | 1472 | 1600 | 2048 | 2176:
+						shakeCam = false;		
+				}								
+	}
 						case 3:
 							limoSpeed -= 2000 * elapsed;
 							if(limoSpeed < 1000) limoSpeed = 1000;
@@ -2872,6 +2927,13 @@ class PlayState extends MusicBeatState
 						char = boyfriend;
 					default:
 						var val:Int = Std.parseInt(value1);
+									#if android
+			if (curSong.toLowerCase() == 'furiosity')
+                {
+                    screenshader.shader.uampmul.value[0] = 0;
+                    screenshader.Enabled = false;
+                }
+			#end	
 						if(Math.isNaN(val)) val = 0;
 
 						switch(val) {
